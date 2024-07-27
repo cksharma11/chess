@@ -7,14 +7,14 @@
 
 .chess-board {
     display: grid;
-    grid-template-columns: repeat(8, 75px);
-    grid-template-rows: repeat(8, 75px);
+    grid-template-columns: repeat(8, 9vh);
+    grid-template-rows: repeat(8, 9vh);
     border: 1px solid black;
 }
 
 .square {
-    width: 75px;
-    height: 75px;
+    width: 9vh;
+    height: 9vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -26,4 +26,12 @@
 
 .black {
     background-color: gray;
+}
+
+.chess-piece {
+    font-size: 3em;
+}
+
+.chess-piece:hover {
+    cursor: pointer;
 }

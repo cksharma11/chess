@@ -26,7 +26,7 @@ const ChessPiece = ({type, color}) => {
             break;
     }
 
-    return <span style={{fontSize: "2.5em"}}>{piece}</span>;
+    return <span className="chess-piece">{piece}</span>;
 };
 
 export default ChessPiece;
