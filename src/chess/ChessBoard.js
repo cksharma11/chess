@@ -43,8 +43,11 @@ const ChessBoard = () => {
                 newBoard[i][j] = piece;
                 setBoard(newBoard);
                 setTurn(turn === "white" ? "black" : "white");
+            } else if (board[i][j] && board[i][j].color === turn) {
+                setSelectedPiece({piece: board[i][j], from: {i, j}});
+            } else {
+                setSelectedPiece(null);
             }
-            setSelectedPiece(null);
         } else if (board[i][j] && board[i][j].color === turn) {
             setSelectedPiece({piece: board[i][j], from: {i, j}});
         }
