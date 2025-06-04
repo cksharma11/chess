@@ -1,6 +1,6 @@
 import React from "react";
 
-const ChessPiece = ({type, color}) => {
+const ChessPiece = ({type, color, onDragStart}) => {
     let piece;
     switch (type) {
         case "king":
@@ -26,7 +26,18 @@ const ChessPiece = ({type, color}) => {
             break;
     }
 
-    return <span className="chess-piece">{piece}</span>;
+    return (
+        <span 
+            className="chess-piece"
+            draggable
+            onDragStart={onDragStart}
+            onDragEnd={(e) => {
+                e.target.classList.remove('dragging');
+            }}
+        >
+            {piece}
+        </span>
+    );
 };
 
 export default ChessPiece;
