@@ -1,89 +1,81 @@
-export const isMoveValid = (piece, from, to, board) => {
-    if (!piece) return false;
-    const targetPiece = board[to.i][to.j];
+export const isMoveValid = (piece, from, to, board, moveHistory) => {
+    // Basic validation
+    if (!piece || !from || !to || !board) return false;
+    
+    // Can't capture your own pieces
+    if (board[to.i][to.j] && board[to.i][to.j].color === piece.color) return false;
 
-    if (targetPiece && targetPiece.color === piece.color) return false;
+    const rowDiff = to.i - from.i;
+    const colDiff = to.j - from.j;
+    const absRowDiff = Math.abs(rowDiff);
+    const absColDiff = Math.abs(colDiff);
 
     switch (piece.type) {
-        case "pawn":
-            return isValidPawnMove(piece, from, to, board);
-        case "rook":
-            return isValidRookMove(from, to, board);
-        case "knight":
-            return isValidKnightMove(from, to);
-        case "bishop":
-            return isValidBishopMove(from, to, board);
-        case "queen":
-            return isValidQueenMove(from, to, board);
-        case "king":
-            return isValidKingMove(from, to, board);
+        case 'pawn':
+            const direction = piece.color === 'white' ? -1 : 1;
+            
+            // Normal move forward
+            if (colDiff === 0 && absRowDiff === 1 && !board[to.i][to.j]) {
+                return true;
+            }
+            
+            // Initial two-square move
+            if (colDiff === 0 && absRowDiff === 2 && !board[to.i][to.j]) {
+                const startRow = piece.color === 'white' ? 6 : 1;
+                const middleRow = from.i + direction;
+                return from.i === startRow && !board[middleRow][from.j];
+            }
+            
+            // Normal capture
+            if (absColDiff === 1 && absRowDiff === 1 && board[to.i][to.j]) {
+                return true;
+            }
+            
+            // En passant capture
+            if (absColDiff === 1 && absRowDiff === 1 && !board[to.i][to.j]) {
+                if (moveHistory?.enPassantTarget) {
+                    const { i, j } = moveHistory.enPassantTarget;
+                    return to.i === i && to.j === j;
+                }
+            }
+            return false;
+
+        case 'rook':
+            return (rowDiff === 0 || colDiff === 0) && !isPathBlocked(from, to, board);
+
+        case 'knight':
+            return (absRowDiff === 2 && absColDiff === 1) || (absRowDiff === 1 && absColDiff === 2);
+
+        case 'bishop':
+            return absRowDiff === absColDiff && !isPathBlocked(from, to, board);
+
+        case 'queen':
+            return ((rowDiff === 0 || colDiff === 0) || absRowDiff === absColDiff) && !isPathBlocked(from, to, board);
+
+        case 'king':
+            return absRowDiff <= 1 && absColDiff <= 1;
+
         default:
             return false;
     }
 };
 
-const isValidPawnMove = (piece, from, to, board) => {
-    const direction = piece.color === "white" ? -1 : 1;
-    const startRow = piece.color === "white" ? 6 : 1;
-
-    if (from.j === to.j && !board[to.i][to.j]) {
-        if (to.i === from.i + direction) return true;
-        if (
-            from.i === startRow &&
-            to.i === from.i + 2 * direction &&
-            !board[from.i + direction][from.j]
-        )
+const isPathBlocked = (from, to, board) => {
+    const rowDiff = to.i - from.i;
+    const colDiff = to.j - from.j;
+    const rowStep = rowDiff === 0 ? 0 : rowDiff / Math.abs(rowDiff);
+    const colStep = colDiff === 0 ? 0 : colDiff / Math.abs(colDiff);
+    
+    let currentRow = from.i + rowStep;
+    let currentCol = from.j + colStep;
+    
+    while (currentRow !== to.i || currentCol !== to.j) {
+        if (board[currentRow][currentCol]) {
             return true;
-    } else if (
-        Math.abs(to.j - from.j) === 1 &&
-        to.i === from.i + direction &&
-        board[to.i][to.j]
-    ) {
-        return true;
+        }
+        currentRow += rowStep;
+        currentCol += colStep;
     }
-
+    
     return false;
-};
-
-const isValidRookMove = (from, to, board) => {
-    if (from.i !== to.i && from.j !== to.j) return false;
-
-    const [start, end] = from.i === to.i ? [from.j, to.j] : [from.i, to.i];
-    const delta = start < end ? 1 : -1;
-
-    for (let k = start + delta; k !== end; k += delta) {
-        if (from.i === to.i && board[from.i][k]) return false;
-        if (from.j === to.j && board[k][from.j]) return false;
-    }
-
-    return true;
-};
-
-const isValidKnightMove = (from, to) => {
-    const dx = Math.abs(from.i - to.i);
-    const dy = Math.abs(from.j - to.j);
-    return (dx === 2 && dy === 1) || (dx === 1 && dy === 2);
-};
-
-const isValidBishopMove = (from, to, board) => {
-    if (Math.abs(from.i - to.i) !== Math.abs(from.j - to.j)) return false;
-
-    const deltaI = from.i < to.i ? 1 : -1;
-    const deltaJ = from.j < to.j ? 1 : -1;
-
-    for (let k = 1; k < Math.abs(from.i - to.i); k++) {
-        if (board[from.i + k * deltaI][from.j + k * deltaJ]) return false;
-    }
-
-    return true;
-};
-
-const isValidQueenMove = (from, to, board) => {
-    return isValidRookMove(from, to, board) || isValidBishopMove(from, to, board);
-};
-
-const isValidKingMove = (from, to, board) => {
-    const dx = Math.abs(from.i - to.i);
-    const dy = Math.abs(from.j - to.j);
-    return dx <= 1 && dy <= 1;
 };
