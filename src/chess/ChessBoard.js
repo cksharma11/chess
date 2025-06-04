@@ -44,7 +44,18 @@ const ChessBoard = () => {
     const [promotionInfo, setPromotionInfo] = useState(null);
     const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
     const [isReviewing, setIsReviewing] = useState(false);
+    const [capturedPieces, setCapturedPieces] = useState({ white: [], black: [] });
     const { playMoveSound, playCaptureSound } = SoundEffects();
+
+    // Piece values for evaluation
+    const PIECE_VALUES = {
+        pawn: 1,
+        knight: 3,
+        bishop: 3,
+        rook: 5,
+        queen: 9,
+        king: 0
+    };
 
     // Handle keyboard navigation
     useEffect(() => {
@@ -84,6 +95,44 @@ const ChessBoard = () => {
             setBoard(newBoard);
             setTurn(index % 2 === 0 ? "white" : "black");
         }
+    };
+
+    // Calculate win percentages based on material and position
+    const calculateWinPercentage = () => {
+        let whiteScore = 0;
+        let blackScore = 0;
+
+        // Count captured pieces
+        capturedPieces.white.forEach(piece => {
+            whiteScore += PIECE_VALUES[piece.type];
+        });
+        capturedPieces.black.forEach(piece => {
+            blackScore += PIECE_VALUES[piece.type];
+        });
+
+        // Count remaining pieces on board
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                const piece = board[i][j];
+                if (piece) {
+                    const value = PIECE_VALUES[piece.type];
+                    if (piece.color === 'white') {
+                        whiteScore += value;
+                    } else {
+                        blackScore += value;
+                    }
+                }
+            }
+        }
+
+        const totalScore = whiteScore + blackScore;
+        if (totalScore === 0) return { white: 50, black: 50 };
+
+        const whitePercentage = Math.round((whiteScore / totalScore) * 100);
+        return {
+            white: whitePercentage,
+            black: 100 - whitePercentage
+        };
     };
 
     const handleTimeUp = (color) => {
@@ -142,6 +191,7 @@ const ChessBoard = () => {
         setPromotionInfo(null);
         setCurrentMoveIndex(-1);
         setIsReviewing(false);
+        setCapturedPieces({ white: [], black: [] });
     };
 
     const handlePromotion = (pieceType) => {
@@ -199,6 +249,18 @@ const ChessBoard = () => {
             const newBoard = board.map((row) => row.slice());
             newBoard[dragSource.i][dragSource.j] = null;
             
+            // Handle captures
+            if (newBoard[i][j]) {
+                const capturedPiece = newBoard[i][j];
+                setCapturedPieces(prev => ({
+                    ...prev,
+                    [draggedPiece.color]: [...prev[draggedPiece.color], capturedPiece]
+                }));
+                playCaptureSound();
+            } else {
+                playMoveSound();
+            }
+            
             // Handle en passant capture
             if (draggedPiece.type === 'pawn' && 
                 Math.abs(j - dragSource.j) === 1 && 
@@ -206,12 +268,13 @@ const ChessBoard = () => {
                 moveHistory.enPassantTarget?.i === i && 
                 moveHistory.enPassantTarget?.j === j) {
                 const capturedPawnRow = dragSource.i;
+                const capturedPawn = newBoard[capturedPawnRow][j];
                 newBoard[capturedPawnRow][j] = null;
+                setCapturedPieces(prev => ({
+                    ...prev,
+                    [draggedPiece.color]: [...prev[draggedPiece.color], capturedPawn]
+                }));
                 playCaptureSound();
-            } else if (newBoard[i][j]) {
-                playCaptureSound();
-            } else {
-                playMoveSound();
             }
             
             newBoard[i][j] = draggedPiece;
@@ -297,7 +360,7 @@ const ChessBoard = () => {
     return (
         <div className="chess-board-container">
             <div>
-                <div className="timer-container">
+                <div className="timer-container" style={{ display: 'none' }}>
                     <div>
                         <div className="timer-label">White</div>
                         <Timer isActive={turn === 'white' && !gameOver} onTimeUp={() => handleTimeUp('white')} />
@@ -307,6 +370,36 @@ const ChessBoard = () => {
                         <Timer isActive={turn === 'black' && !gameOver} onTimeUp={() => handleTimeUp('black')} />
                     </div>
                 </div>
+                <div className="win-percentages">
+                    <div className="win-percentage white">
+                        <span>White: {calculateWinPercentage().white}%</span>
+                    </div>
+                    <div className="win-percentage black">
+                        <span>Black: {calculateWinPercentage().black}%</span>
+                    </div>
+                </div>
+                <div className="captured-pieces">
+                    <div className="captured-pieces-section white">
+                        <h3>Captured by White</h3>
+                        <div className="captured-pieces-list">
+                            {capturedPieces.white.map((piece, index) => (
+                                <div key={`white-${index}`} className="captured-piece">
+                                    <RoyalChessPiece type={piece.type} color={piece.color} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="captured-pieces-section black">
+                        <h3>Captured by Black</h3>
+                        <div className="captured-pieces-list">
+                            {capturedPieces.black.map((piece, index) => (
+                                <div key={`black-${index}`} className="captured-piece">
+                                    <RoyalChessPiece type={piece.type} color={piece.color} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
                 <div 
                     className="chess-board"
                     onDragEnd={handleDragEnd}
@@ -314,11 +407,6 @@ const ChessBoard = () => {
                     {squares}
                 </div>
             </div>
-            <MoveList 
-                moves={moveHistory?.moves || []}
-                currentMoveIndex={currentMoveIndex}
-                onMoveSelect={handleMoveSelect}
-            />
             {gameOver && (
                 <GameOverPopup 
                     winner={winner} 

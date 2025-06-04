@@ -25,6 +25,12 @@ const RoyalChessPiece = ({ type, color, onDragStart }) => {
                             <path d="M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5" fill={pieceColor} stroke={strokeColor} strokeWidth="1.5" strokeLinecap="round"/>
                             <path d="M11.5 37c17.5 3.5 27.5 3.5 45 0v-7s-9.5 3-22.5-3c-13 6-22.5 3-22.5 3v7z" fill={pieceColor} stroke={strokeColor} strokeWidth="1.5"/>
                             <path d="M11.5 30c17.5-3 27.5-3 45 0m-45 3.5c17.5 3 27.5 3 45 0m-45 3.5c17.5 3 27.5 3 45 0" stroke={strokeColor} strokeWidth="1.5"/>
+                            <path d="M20 8h5" strokeWidth="2"/>
+                            <path d="M22.5 6v5" strokeWidth="2"/>
+                            <path d="M20 8c0-2 2-3 2.5-3s2.5 1 2.5 3" strokeWidth="2"/>
+                            <path d="M22.5 11.63c-1.5 0-3-1.5-3-3.13 0-1.5 1.5-3 3-3s3 1.5 3 3.13c0 1.63-1.5 3.13-3 3.13z" fill={pieceColor} stroke={strokeColor} strokeWidth="1.5"/>
+                            <path d="M22.5 8.5v3" strokeWidth="2"/>
+                            <path d="M20 8.5h5" strokeWidth="2"/>
                         </g>
                     </svg>
                 );
@@ -91,8 +97,8 @@ const RoyalChessPiece = ({ type, color, onDragStart }) => {
             onDragEnd={handleDragEnd}
             style={{
                 filter: `drop-shadow(2px 2px 2px ${shadowColor})`,
-                width: '80%',
-                height: '80%',
+                width: '85%',
+                height: '85%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'

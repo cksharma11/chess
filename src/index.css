@@ -2,56 +2,50 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    background: linear-gradient(135deg, #2c3e50, #3498db);
+    min-height: 100vh;
+    background: #1a1a1a;
+    padding: 20px;
+}
+
+.chess-board-container {
+    display: flex;
+    justify-content: center;
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .chess-board {
     display: grid;
-    grid-template-columns: repeat(8, 9vh);
-    grid-template-rows: repeat(8, 9vh);
-    border: 20px solid #8B4513;
-    border-radius: 5px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    position: relative;
-    background: #8B4513;
-    padding: 10px;
-}
-
-.chess-board::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(45deg, #8B4513, #A0522D);
-    z-index: -1;
-    border-radius: 7px;
+    grid-template-columns: repeat(8, 80px);
+    grid-template-rows: repeat(8, 80px);
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .square {
-    width: 9vh;
-    height: 9vh;
+    width: 80px;
+    height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease;
     position: relative;
+}
+
+.square.white {
+    background-color: #eeeed2;
+}
+
+.square.black {
+    background-color: #769656;
 }
 
 .square:hover {
     filter: brightness(1.1);
-}
-
-.white {
-    background-color: #F0D9B5;
-    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23d4b483' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
-}
-
-.black {
-    background-color: #B58863;
-    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%239c6d4f' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
 
 .royal-chess-piece {
@@ -59,6 +53,8 @@
     user-select: none;
     transition: transform 0.2s ease;
     pointer-events: all;
+    width: 85%;
+    height: 85%;
 }
 
 .royal-chess-piece:active {
@@ -72,33 +68,133 @@
     z-index: 1000;
 }
 
-/* Add coordinates to the board */
+/* Coordinates styling */
 .square::before {
     content: attr(data-coord);
     position: absolute;
-    font-size: 1.2vh;
+    font-size: 14px;
     color: rgba(0, 0, 0, 0.5);
     font-weight: bold;
     pointer-events: none;
 }
 
 .square[data-coord]:nth-child(-n+8)::before {
-    top: 2px;
-    left: 2px;
+    top: 4px;
+    left: 4px;
 }
 
 .square[data-coord]:nth-child(8n)::before {
-    bottom: 2px;
-    right: 2px;
+    bottom: 4px;
+    right: 4px;
 }
 
+/* Win percentages styling */
+.win-percentages {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: 0 10px;
+}
+
+.win-percentage {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.win-percentage.white {
+    background: #eeeed2;
+    color: #000;
+}
+
+.win-percentage.black {
+    background: #769656;
+    color: #fff;
+}
+
+/* Timer container - hidden but keeping the structure */
+.timer-container {
+    display: none;
+}
+
+/* Move list styling */
+.move-list {
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: 8px;
+    width: 250px;
+    color: #fff;
+}
+
+.move-list h3 {
+    color: #fff;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.moves {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #1a1a1a;
+    border-radius: 4px;
+}
+
+.move {
+    padding: 8px;
+    margin: 4px 0;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    color: #ccc;
+}
+
+.move:hover {
+    background: #3a3a3a;
+}
+
+.move.current {
+    background: #769656;
+    color: white;
+}
+
+.move-navigation {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.move-navigation button {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    background: #3a3a3a;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.move-navigation button:hover:not(:disabled) {
+    background: #4a4a4a;
+}
+
+.move-navigation button:disabled {
+    background: #2a2a2a;
+    cursor: not-allowed;
+}
+
+/* Game over popup styling */
 .game-over-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -106,57 +202,47 @@
 }
 
 .game-over-popup {
-    background: white;
+    background: #2a2a2a;
     padding: 2rem;
-    border-radius: 10px;
+    border-radius: 8px;
     text-align: center;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-    animation: popup-appear 0.3s ease-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    color: #fff;
 }
 
 .game-over-popup h2 {
-    color: #2c3e50;
+    color: #fff;
     margin-bottom: 1rem;
 }
 
 .game-over-popup p {
-    color: #34495e;
+    color: #ccc;
     margin-bottom: 1.5rem;
 }
 
 .game-over-popup button {
-    background: #3498db;
+    background: #769656;
     color: white;
     border: none;
     padding: 0.8rem 1.5rem;
-    border-radius: 5px;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 1rem;
     transition: background 0.2s ease;
 }
 
 .game-over-popup button:hover {
-    background: #2980b9;
+    background: #8aad6d;
 }
 
-@keyframes popup-appear {
-    from {
-        transform: scale(0.8);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
+/* Promotion popup styling */
 .promotion-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -164,16 +250,16 @@
 }
 
 .promotion-popup {
-    background: white;
+    background: #2a2a2a;
     padding: 2rem;
-    border-radius: 10px;
+    border-radius: 8px;
     text-align: center;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-    animation: popup-appear 0.3s ease-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    color: #fff;
 }
 
 .promotion-popup h3 {
-    color: #2c3e50;
+    color: #fff;
     margin-bottom: 1.5rem;
 }
 
@@ -185,9 +271,9 @@
 }
 
 .promotion-option {
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
+    background: #1a1a1a;
+    border: 2px solid #3a3a3a;
+    border-radius: 4px;
     padding: 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -197,9 +283,9 @@
 }
 
 .promotion-option:hover {
-    background: #e9ecef;
+    background: #3a3a3a;
     transform: scale(1.05);
-    border-color: #3498db;
+    border-color: #769656;
 }
 
 .promotion-option .royal-chess-piece {
@@ -321,4 +407,69 @@
 
 .move.empty:hover {
     background: none;
+}
+
+/* Captured pieces styling */
+.captured-pieces {
+    display: flex;
+    justify-content: space-between;
+    margin: 15px 0;
+    padding: 10px;
+    background: #2a2a2a;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    min-height: 80px;
+}
+
+.captured-pieces-section {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    margin: 0 5px;
+}
+
+.captured-pieces-section h3 {
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.captured-pieces-section.white h3 {
+    color: #eeeed2;
+}
+
+.captured-pieces-section.black h3 {
+    color: #769656;
+}
+
+.captured-pieces-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center;
+    min-height: 40px;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.captured-piece {
+    width: 25px;
+    height: 25px;
+    opacity: 0.8;
+    transition: transform 0.2s ease;
+    margin: 2px;
+}
+
+.captured-piece:hover {
+    transform: scale(1.2);
+    opacity: 1;
+}
+
+.captured-piece .royal-chess-piece {
+    width: 100%;
+    height: 100%;
 }
