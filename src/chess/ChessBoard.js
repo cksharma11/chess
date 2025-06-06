@@ -45,6 +45,10 @@ const ChessBoard = () => {
     const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
     const [isReviewing, setIsReviewing] = useState(false);
     const [capturedPieces, setCapturedPieces] = useState({ white: [], black: [] });
+    const [castlingRights, setCastlingRights] = useState({
+        white: { kingSide: true, queenSide: true },
+        black: { kingSide: true, queenSide: true }
+    });
     const { playMoveSound, playCaptureSound } = SoundEffects();
 
     // Piece values for evaluation
@@ -192,6 +196,10 @@ const ChessBoard = () => {
         setCurrentMoveIndex(-1);
         setIsReviewing(false);
         setCapturedPieces({ white: [], black: [] });
+        setCastlingRights({
+            white: { kingSide: true, queenSide: true },
+            black: { kingSide: true, queenSide: true }
+        });
     };
 
     const handlePromotion = (pieceType) => {
@@ -241,6 +249,312 @@ const ChessBoard = () => {
         e.dataTransfer.dropEffect = 'move';
     };
 
+    const canPieceAttackSquare = (piece, source, target, board) => {
+        if (!piece) return false;
+
+        // Check if target is within board bounds
+        if (target.i < 0 || target.i > 7 || target.j < 0 || target.j > 7) return false;
+
+        // Check if target square is occupied by same color piece
+        if (board[target.i][target.j] && board[target.i][target.j].color === piece.color) return false;
+
+        // Check if the piece can attack the square based on its type
+        switch (piece.type) {
+            case 'pawn':
+                const direction = piece.color === 'white' ? -1 : 1;
+                return Math.abs(target.j - source.j) === 1 && target.i === source.i + direction;
+            case 'rook':
+                return isValidRookMove(piece, source, target, board);
+            case 'knight':
+                return isValidKnightMove(piece, source, target, board);
+            case 'bishop':
+                return isValidBishopMove(piece, source, target, board);
+            case 'queen':
+                return isValidQueenMove(piece, source, target, board);
+            case 'king':
+                const rowDiff = Math.abs(target.i - source.i);
+                const colDiff = Math.abs(target.j - source.j);
+                return rowDiff <= 1 && colDiff <= 1;
+            default:
+                return false;
+        }
+    };
+
+    const isSquareUnderAttack = (square, attackingColor, board) => {
+        // Check if any piece of the attacking color can attack this square
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                const piece = board[i][j];
+                if (piece && piece.color === attackingColor) {
+                    if (canPieceAttackSquare(piece, { i, j }, square, board)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    };
+
+    const isKingInCheck = (color, board) => {
+        // Find the king's position
+        let kingPosition = null;
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                const piece = board[i][j];
+                if (piece && piece.type === 'king' && piece.color === color) {
+                    kingPosition = { i, j };
+                    break;
+                }
+            }
+            if (kingPosition) break;
+        }
+
+        if (!kingPosition) return true; // King is captured, game over
+
+        // Check if any opponent piece can attack the king
+        const opponentColor = color === 'white' ? 'black' : 'white';
+        return isSquareUnderAttack(kingPosition, opponentColor, board);
+    };
+
+    const isValidPawnMove = (piece, source, target, board, moveHistory) => {
+        const direction = piece.color === 'white' ? -1 : 1;
+        const startRow = piece.color === 'white' ? 6 : 1;
+        
+        // Forward move
+        if (target.j === source.j && !board[target.i][target.j]) {
+            // Single square move
+            if (target.i === source.i + direction) {
+                return true;
+            }
+            // Double square move from starting position
+            if (source.i === startRow && target.i === source.i + 2 * direction && !board[source.i + direction][source.j]) {
+                return true;
+            }
+        }
+        
+        // Capture moves
+        if (Math.abs(target.j - source.j) === 1 && target.i === source.i + direction) {
+            // Regular capture
+            if (board[target.i][target.j] && board[target.i][target.j].color !== piece.color) {
+                return true;
+            }
+            // En passant capture
+            if (moveHistory.enPassantTarget && 
+                target.i === moveHistory.enPassantTarget.i && 
+                target.j === moveHistory.enPassantTarget.j) {
+                return true;
+            }
+        }
+        
+        return false;
+    };
+
+    const isValidRookMove = (piece, source, target, board) => {
+        // Rook moves horizontally or vertically
+        if (source.i !== target.i && source.j !== target.j) return false;
+        
+        // Check if path is clear
+        if (source.i === target.i) {
+            // Horizontal move
+            const direction = target.j > source.j ? 1 : -1;
+            for (let j = source.j + direction; j !== target.j; j += direction) {
+                if (board[source.i][j]) return false;
+            }
+        } else {
+            // Vertical move
+            const direction = target.i > source.i ? 1 : -1;
+            for (let i = source.i + direction; i !== target.i; i += direction) {
+                if (board[i][source.j]) return false;
+            }
+        }
+        
+        return true;
+    };
+
+    const isValidKnightMove = (piece, source, target, board) => {
+        const rowDiff = Math.abs(target.i - source.i);
+        const colDiff = Math.abs(target.j - source.j);
+        return (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2);
+    };
+
+    const isValidBishopMove = (piece, source, target, board) => {
+        // Bishop moves diagonally
+        if (Math.abs(target.i - source.i) !== Math.abs(target.j - source.j)) return false;
+        
+        // Check if path is clear
+        const rowDirection = target.i > source.i ? 1 : -1;
+        const colDirection = target.j > source.j ? 1 : -1;
+        
+        let i = source.i + rowDirection;
+        let j = source.j + colDirection;
+        
+        while (i !== target.i && j !== target.j) {
+            if (board[i][j]) return false;
+            i += rowDirection;
+            j += colDirection;
+        }
+        
+        return true;
+    };
+
+    const isValidQueenMove = (piece, source, target, board) => {
+        // Queen moves like a rook or bishop
+        return isValidRookMove(piece, source, target, board) || 
+               isValidBishopMove(piece, source, target, board);
+    };
+
+    const isValidKingMove = (piece, source, target, board) => {
+        const rowDiff = Math.abs(target.i - source.i);
+        const colDiff = Math.abs(target.j - source.j);
+        
+        // Check for castling
+        if (rowDiff === 0 && colDiff === 2) {
+            const isKingSide = target.j > source.j;
+            const rookCol = isKingSide ? 7 : 0;
+            const rook = board[source.i][rookCol];
+            
+            // Check if castling is allowed
+            if (!castlingRights[piece.color][isKingSide ? 'kingSide' : 'queenSide']) {
+                return false;
+            }
+
+            // Check if king and rook haven't moved
+            if (!rook || rook.type !== 'rook' || rook.color !== piece.color) {
+                return false;
+            }
+
+            // Check if rook has moved by looking at move history
+            const rookHasMoved = moveHistory.moves?.some(move => 
+                move.piece.type === 'rook' && 
+                move.piece.color === piece.color && 
+                move.from.j === rookCol
+            );
+            if (rookHasMoved) {
+                return false;
+            }
+
+            // Check if path is clear
+            const direction = isKingSide ? 1 : -1;
+            for (let j = source.j + direction; j !== rookCol; j += direction) {
+                if (board[source.i][j]) {
+                    return false;
+                }
+            }
+
+            // Check if king is in check or would pass through check
+            for (let j = source.j; j !== target.j + direction; j += direction) {
+                if (isSquareUnderAttack({ i: source.i, j }, piece.color === 'white' ? 'black' : 'white', board)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        
+        // Regular king move
+        return rowDiff <= 1 && colDiff <= 1;
+    };
+
+    const isCheckmate = (board, color) => {
+        // First check if the king is in check
+        if (!isKingInCheck(color, board)) {
+            return false;
+        }
+
+        // Try all possible moves for all pieces of the given color
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                const piece = board[i][j];
+                if (piece && piece.color === color) {
+                    // Try all possible moves for this piece
+                    for (let targetI = 0; targetI < 8; targetI++) {
+                        for (let targetJ = 0; targetJ < 8; targetJ++) {
+                            if (isMoveValid(piece, { i, j }, { i: targetI, j: targetJ }, board, moveHistory)) {
+                                // If any valid move is found, it's not checkmate
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // If no valid moves are found, it's checkmate
+        return true;
+    };
+
+    const isMoveValid = (piece, source, target, board, moveHistory) => {
+        if (!piece || !source || !target) return false;
+        
+        // Check if target is within board bounds
+        if (target.i < 0 || target.i > 7 || target.j < 0 || target.j > 7) return false;
+        
+        // Check if target square is occupied by same color piece
+        if (board[target.i][target.j] && board[target.i][target.j].color === piece.color) return false;
+
+        // Create a temporary board to check if the move gets the king out of check
+        const tempBoard = board.map(row => row.slice());
+        tempBoard[target.i][target.j] = piece;
+        tempBoard[source.i][source.j] = null;
+
+        // If king is in check, only allow moves that get the king out of check
+        if (isKingInCheck(piece.color, board)) {
+            // Check if the move is valid for the piece type
+            let isValidPieceMove = false;
+            switch (piece.type) {
+                case 'pawn':
+                    isValidPieceMove = isValidPawnMove(piece, source, target, board, moveHistory);
+                    break;
+                case 'rook':
+                    isValidPieceMove = isValidRookMove(piece, source, target, board);
+                    break;
+                case 'knight':
+                    isValidPieceMove = isValidKnightMove(piece, source, target, board);
+                    break;
+                case 'bishop':
+                    isValidPieceMove = isValidBishopMove(piece, source, target, board);
+                    break;
+                case 'queen':
+                    isValidPieceMove = isValidQueenMove(piece, source, target, board);
+                    break;
+                case 'king':
+                    isValidPieceMove = isValidKingMove(piece, source, target, board);
+                    break;
+                default:
+                    return false;
+            }
+
+            // If the move is valid for the piece, check if it gets the king out of check
+            if (isValidPieceMove && !isKingInCheck(piece.color, tempBoard)) {
+                return true;
+            }
+            return false;
+        }
+
+        // If king is not in check, check if the move would put the king in check
+        if (isKingInCheck(piece.color, tempBoard)) {
+            return false;
+        }
+
+        // Check if the move is valid for the piece type
+        switch (piece.type) {
+            case 'pawn':
+                return isValidPawnMove(piece, source, target, board, moveHistory);
+            case 'rook':
+                return isValidRookMove(piece, source, target, board);
+            case 'knight':
+                return isValidKnightMove(piece, source, target, board);
+            case 'bishop':
+                return isValidBishopMove(piece, source, target, board);
+            case 'queen':
+                return isValidQueenMove(piece, source, target, board);
+            case 'king':
+                return isValidKingMove(piece, source, target, board);
+            default:
+                return false;
+        }
+    };
+
     const handleDrop = (e, i, j) => {
         e.preventDefault();
         if (!draggedPiece || !dragSource || gameOver || promotionInfo || isReviewing) return;
@@ -252,12 +566,37 @@ const ChessBoard = () => {
             // Handle captures
             if (newBoard[i][j]) {
                 const capturedPiece = newBoard[i][j];
+                // Check if king is captured
+                if (capturedPiece.type === 'king') {
+                    setGameOver(true);
+                    setWinner(draggedPiece.color);
+                    setCapturedPieces(prev => ({
+                        ...prev,
+                        [draggedPiece.color]: [...prev[draggedPiece.color], capturedPiece]
+                    }));
+                    playCaptureSound();
+                    newBoard[i][j] = draggedPiece;
+                    setBoard(newBoard);
+                    return;
+                }
                 setCapturedPieces(prev => ({
                     ...prev,
                     [draggedPiece.color]: [...prev[draggedPiece.color], capturedPiece]
                 }));
                 playCaptureSound();
             } else {
+                playMoveSound();
+            }
+            
+            // Handle castling
+            if (draggedPiece.type === 'king' && Math.abs(j - dragSource.j) === 2) {
+                const isKingSide = j > dragSource.j;
+                const rookCol = isKingSide ? 7 : 0;
+                const newRookCol = isKingSide ? j - 1 : j + 1;
+                
+                // Move the rook
+                newBoard[i][newRookCol] = newBoard[i][rookCol];
+                newBoard[i][rookCol] = null;
                 playMoveSound();
             }
             
@@ -280,6 +619,23 @@ const ChessBoard = () => {
             newBoard[i][j] = draggedPiece;
             setBoard(newBoard);
             
+            // Update castling rights
+            if (draggedPiece.type === 'king') {
+                setCastlingRights(prev => ({
+                    ...prev,
+                    [draggedPiece.color]: { kingSide: false, queenSide: false }
+                }));
+            } else if (draggedPiece.type === 'rook') {
+                const isKingSide = dragSource.j === 7;
+                setCastlingRights(prev => ({
+                    ...prev,
+                    [draggedPiece.color]: {
+                        ...prev[draggedPiece.color],
+                        [isKingSide ? 'kingSide' : 'queenSide']: false
+                    }
+                }));
+            }
+            
             // Check for pawn promotion
             if (draggedPiece.type === 'pawn' && (i === 0 || i === 7)) {
                 setPromotionInfo({ i, j, color: draggedPiece.color });
@@ -301,7 +657,8 @@ const ChessBoard = () => {
                     from: dragSource,
                     to: { i, j },
                     piece: draggedPiece,
-                    captured: board[i][j]
+                    captured: board[i][j],
+                    isCastling: draggedPiece.type === 'king' && Math.abs(j - dragSource.j) === 2
                 }],
                 enPassantTarget
             };
@@ -359,7 +716,27 @@ const ChessBoard = () => {
 
     return (
         <div className="chess-board-container">
-            <div>
+            <div className="side-panel black">
+                <div className="win-percentages">
+                    <div className="win-percentage black">
+                        <span>Black: {calculateWinPercentage().black}%</span>
+                    </div>
+                </div>
+                <div className="captured-pieces">
+                    <div className="captured-pieces-section black">
+                        <h3>Captured by Black</h3>
+                        <div className="captured-pieces-list">
+                            {capturedPieces.black.map((piece, index) => (
+                                <div key={`black-${index}`} className="captured-piece">
+                                    <RoyalChessPiece type={piece.type} color={piece.color} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="board-container">
                 <div className="timer-container" style={{ display: 'none' }}>
                     <div>
                         <div className="timer-label">White</div>
@@ -370,12 +747,18 @@ const ChessBoard = () => {
                         <Timer isActive={turn === 'black' && !gameOver} onTimeUp={() => handleTimeUp('black')} />
                     </div>
                 </div>
+                <div 
+                    className="chess-board"
+                    onDragEnd={handleDragEnd}
+                >
+                    {squares}
+                </div>
+            </div>
+
+            <div className="side-panel white">
                 <div className="win-percentages">
                     <div className="win-percentage white">
                         <span>White: {calculateWinPercentage().white}%</span>
-                    </div>
-                    <div className="win-percentage black">
-                        <span>Black: {calculateWinPercentage().black}%</span>
                     </div>
                 </div>
                 <div className="captured-pieces">
@@ -389,24 +772,9 @@ const ChessBoard = () => {
                             ))}
                         </div>
                     </div>
-                    <div className="captured-pieces-section black">
-                        <h3>Captured by Black</h3>
-                        <div className="captured-pieces-list">
-                            {capturedPieces.black.map((piece, index) => (
-                                <div key={`black-${index}`} className="captured-piece">
-                                    <RoyalChessPiece type={piece.type} color={piece.color} />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-                <div 
-                    className="chess-board"
-                    onDragEnd={handleDragEnd}
-                >
-                    {squares}
                 </div>
             </div>
+
             {gameOver && (
                 <GameOverPopup 
                     winner={winner} 
