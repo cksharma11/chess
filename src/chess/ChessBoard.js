@@ -10,6 +10,44 @@ import { getComputerMove } from "./computerPlayer";
 import Timer from "./Timer";
 import MoveList from "./MoveList";
 
+const initialPieces = [
+    // Black pieces
+    { type: 'rook', color: 'black', i: 0, j: 0 },
+    { type: 'knight', color: 'black', i: 0, j: 1 },
+    { type: 'bishop', color: 'black', i: 0, j: 2 },
+    { type: 'queen', color: 'black', i: 0, j: 3 },
+    { type: 'king', color: 'black', i: 0, j: 4 },
+    { type: 'bishop', color: 'black', i: 0, j: 5 },
+    { type: 'knight', color: 'black', i: 0, j: 6 },
+    { type: 'rook', color: 'black', i: 0, j: 7 },
+    { type: 'pawn', color: 'black', i: 1, j: 0 },
+    { type: 'pawn', color: 'black', i: 1, j: 1 },
+    { type: 'pawn', color: 'black', i: 1, j: 2 },
+    { type: 'pawn', color: 'black', i: 1, j: 3 },
+    { type: 'pawn', color: 'black', i: 1, j: 4 },
+    { type: 'pawn', color: 'black', i: 1, j: 5 },
+    { type: 'pawn', color: 'black', i: 1, j: 6 },
+    { type: 'pawn', color: 'black', i: 1, j: 7 },
+    
+    // White pieces
+    { type: 'pawn', color: 'white', i: 6, j: 0 },
+    { type: 'pawn', color: 'white', i: 6, j: 1 },
+    { type: 'pawn', color: 'white', i: 6, j: 2 },
+    { type: 'pawn', color: 'white', i: 6, j: 3 },
+    { type: 'pawn', color: 'white', i: 6, j: 4 },
+    { type: 'pawn', color: 'white', i: 6, j: 5 },
+    { type: 'pawn', color: 'white', i: 6, j: 6 },
+    { type: 'pawn', color: 'white', i: 6, j: 7 },
+    { type: 'rook', color: 'white', i: 7, j: 0 },
+    { type: 'knight', color: 'white', i: 7, j: 1 },
+    { type: 'bishop', color: 'white', i: 7, j: 2 },
+    { type: 'queen', color: 'white', i: 7, j: 3 },
+    { type: 'king', color: 'white', i: 7, j: 4 },
+    { type: 'bishop', color: 'white', i: 7, j: 5 },
+    { type: 'knight', color: 'white', i: 7, j: 6 },
+    { type: 'rook', color: 'white', i: 7, j: 7 }
+];
+
 const initialBoardSetup = () => {
     const board = Array(8)
         .fill(null)
@@ -67,9 +105,9 @@ const ChessBoard = () => {
             if (gameOver || promotionInfo) return;
             
             if (e.key === 'ArrowLeft') {
-                handleMoveSelect(currentMoveIndex - 1);
+                handleMoveNavigation('back');
             } else if (e.key === 'ArrowRight') {
-                handleMoveSelect(currentMoveIndex + 1);
+                handleMoveNavigation('forward');
             }
         };
 
@@ -77,28 +115,75 @@ const ChessBoard = () => {
         return () => window.removeEventListener('keydown', handleKeyPress);
     }, [currentMoveIndex, gameOver, promotionInfo]);
 
-    const handleMoveSelect = (index) => {
-        const moves = moveHistory?.moves || [];
-        if (index < -1 || index >= moves.length) return;
+    const handleMoveNavigation = (direction) => {
+        if (!moveHistory.moves || moveHistory.moves.length === 0) return;
         
-        setCurrentMoveIndex(index);
-        setIsReviewing(index !== moves.length - 1);
-        
-        if (index === -1) {
-            setBoard(initialBoardSetup());
-            setTurn("white");
+        let newIndex;
+        if (direction === 'back') {
+            newIndex = Math.max(0, currentMoveIndex - 1);
         } else {
-            const newBoard = initialBoardSetup();
-            for (let i = 0; i <= index; i++) {
-                const move = moves[i];
-                if (move) {
-                    newBoard[move.to.i][move.to.j] = move.piece;
-                    newBoard[move.from.i][move.from.j] = null;
-                }
-            }
-            setBoard(newBoard);
-            setTurn(index % 2 === 0 ? "white" : "black");
+            newIndex = Math.min(moveHistory.moves.length - 1, currentMoveIndex + 1);
         }
+        
+        if (newIndex === currentMoveIndex) return;
+        
+        // Reset the board to initial state
+        const initialBoard = Array(8).fill(null).map((_, i) =>
+            Array(8).fill(null).map((_, j) => {
+                const piece = initialPieces.find(p => p.i === i && p.j === j);
+                return piece ? { ...piece } : null;
+            })
+        );
+        
+        // Apply moves up to the selected index
+        const newBoard = initialBoard.map(row => row.slice());
+        const newCapturedPieces = { white: [], black: [] };
+        const newCastlingRights = {
+            white: { kingSide: true, queenSide: true },
+            black: { kingSide: true, queenSide: true }
+        };
+        
+        for (let i = 0; i <= newIndex; i++) {
+            const move = moveHistory.moves[i];
+            const { from, to, piece, captured, isCastling } = move;
+            
+            // Handle captures
+            if (captured) {
+                newCapturedPieces[piece.color].push(captured);
+            }
+            
+            // Handle castling
+            if (isCastling) {
+                const isKingSide = to.j > from.j;
+                const rookCol = isKingSide ? 7 : 0;
+                const newRookCol = isKingSide ? to.j - 1 : to.j + 1;
+                
+                // Move the rook
+                newBoard[to.i][newRookCol] = newBoard[from.i][rookCol];
+                newBoard[from.i][rookCol] = null;
+                
+                // Update castling rights
+                newCastlingRights[piece.color] = { kingSide: false, queenSide: false };
+            }
+            
+            // Move the piece
+            newBoard[to.i][to.j] = piece;
+            newBoard[from.i][from.j] = null;
+            
+            // Update castling rights for king and rook moves
+            if (piece.type === 'king') {
+                newCastlingRights[piece.color] = { kingSide: false, queenSide: false };
+            } else if (piece.type === 'rook') {
+                const isKingSide = from.j === 7;
+                newCastlingRights[piece.color][isKingSide ? 'kingSide' : 'queenSide'] = false;
+            }
+        }
+        
+        setBoard(newBoard);
+        setCapturedPieces(newCapturedPieces);
+        setCastlingRights(newCastlingRights);
+        setCurrentMoveIndex(newIndex);
+        setTurn(newIndex % 2 === 0 ? 'white' : 'black');
     };
 
     // Calculate win percentages based on material and position
