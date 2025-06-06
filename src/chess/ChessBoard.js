@@ -86,8 +86,8 @@ const ChessBoard = () => {
     });
     const [isReviewing, setIsReviewing] = useState(false);
     const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
-    const moveSoundRef = useRef(new Audio('/sounds/move.mp3'));
-    const captureSoundRef = useRef(new Audio('/sounds/capture.mp3'));
+    const moveSoundRef = useRef(new Audio(process.env.PUBLIC_URL + '/sounds/move.mp3'));
+    const captureSoundRef = useRef(new Audio(process.env.PUBLIC_URL + '/sounds/capture.mp3'));
 
     // Piece values for evaluation
     const PIECE_VALUES = {
@@ -104,8 +104,8 @@ const ChessBoard = () => {
         const moveSound = new Audio();
         const captureSound = new Audio();
         
-        moveSound.src = '/sounds/move.mp3';
-        captureSound.src = '/sounds/capture.mp3';
+        moveSound.src = process.env.PUBLIC_URL + '/sounds/move.mp3';
+        captureSound.src = process.env.PUBLIC_URL + '/sounds/capture.mp3';
         
         // Set audio properties
         moveSound.preload = 'auto';
@@ -675,7 +675,7 @@ const ChessBoard = () => {
 
     const testSound = () => {
         console.log("Testing sound...");
-        const audio = new Audio('/sounds/move.mp3');
+        const audio = new Audio(process.env.PUBLIC_URL + '/sounds/move.mp3');
         audio.play().then(() => {
             console.log("Sound played successfully");
         }).catch(error => {
@@ -685,7 +685,7 @@ const ChessBoard = () => {
 
     const playMoveSound = () => {
         console.log("Playing move sound...");
-        const audio = new Audio('/sounds/move.mp3');
+        const audio = new Audio(process.env.PUBLIC_URL + '/sounds/move.mp3');
         audio.play().catch(error => {
             console.error("Error playing move sound:", error);
         });
@@ -693,7 +693,7 @@ const ChessBoard = () => {
 
     const playCaptureSound = () => {
         console.log("Playing capture sound...");
-        const audio = new Audio('/sounds/capture.mp3');
+        const audio = new Audio(process.env.PUBLIC_URL + '/sounds/capture.mp3');
         audio.play().catch(error => {
             console.error("Error playing capture sound:", error);
         });
