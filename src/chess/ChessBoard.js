@@ -1,14 +1,13 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import RoyalChessPiece from "./RoyalChessPiece";
 import {isMoveValid} from "./moveValidations";
-import SoundEffects from "./SoundEffects";
 import GameOverPopup from "./GameOverPopup";
 import PromotionPopup from "./PromotionPopup";
+import Timer from "./Timer";
+import MoveList from "./MoveList";
 import { isCheckmate } from "./checkmateDetection";
 import { createMoveHistory, updateMoveHistory } from "./moveHistory";
 import { getComputerMove } from "./computerPlayer";
-import Timer from "./Timer";
-import MoveList from "./MoveList";
 
 const initialPieces = [
     // Black pieces
@@ -73,21 +72,22 @@ const initialBoardSetup = () => {
 
 const ChessBoard = () => {
     const [board, setBoard] = useState(initialBoardSetup());
-    const [turn, setTurn] = useState("white");
     const [draggedPiece, setDraggedPiece] = useState(null);
     const [dragSource, setDragSource] = useState(null);
+    const [turn, setTurn] = useState("white");
     const [gameOver, setGameOver] = useState(false);
     const [winner, setWinner] = useState(null);
-    const [moveHistory, setMoveHistory] = useState({ moves: [], enPassantTarget: null });
-    const [promotionInfo, setPromotionInfo] = useState(null);
-    const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
-    const [isReviewing, setIsReviewing] = useState(false);
     const [capturedPieces, setCapturedPieces] = useState({ white: [], black: [] });
+    const [promotionInfo, setPromotionInfo] = useState(null);
+    const [moveHistory, setMoveHistory] = useState({ moves: [], enPassantTarget: null });
     const [castlingRights, setCastlingRights] = useState({
         white: { kingSide: true, queenSide: true },
         black: { kingSide: true, queenSide: true }
     });
-    const { playMoveSound, playCaptureSound } = SoundEffects();
+    const [isReviewing, setIsReviewing] = useState(false);
+    const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
+    const moveSoundRef = useRef(new Audio('/sounds/move.mp3'));
+    const captureSoundRef = useRef(new Audio('/sounds/capture.mp3'));
 
     // Piece values for evaluation
     const PIECE_VALUES = {
@@ -98,6 +98,39 @@ const ChessBoard = () => {
         queen: 9,
         king: 0
     };
+
+    useEffect(() => {
+        // Initialize audio elements
+        const moveSound = new Audio();
+        const captureSound = new Audio();
+        
+        moveSound.src = '/sounds/move.mp3';
+        captureSound.src = '/sounds/capture.mp3';
+        
+        // Set audio properties
+        moveSound.preload = 'auto';
+        captureSound.preload = 'auto';
+        
+        // Store in refs
+        moveSoundRef.current = moveSound;
+        captureSoundRef.current = captureSound;
+        
+        // Load the sounds
+        moveSound.load();
+        captureSound.load();
+        
+        // Cleanup
+        return () => {
+            if (moveSoundRef.current) {
+                moveSoundRef.current.pause();
+                moveSoundRef.current = null;
+            }
+            if (captureSoundRef.current) {
+                captureSoundRef.current.pause();
+                captureSoundRef.current = null;
+            }
+        };
+    }, []);
 
     // Handle keyboard navigation
     useEffect(() => {
@@ -640,6 +673,32 @@ const ChessBoard = () => {
         }
     };
 
+    const testSound = () => {
+        console.log("Testing sound...");
+        const audio = new Audio('/sounds/move.mp3');
+        audio.play().then(() => {
+            console.log("Sound played successfully");
+        }).catch(error => {
+            console.error("Error playing sound:", error);
+        });
+    };
+
+    const playMoveSound = () => {
+        console.log("Playing move sound...");
+        const audio = new Audio('/sounds/move.mp3');
+        audio.play().catch(error => {
+            console.error("Error playing move sound:", error);
+        });
+    };
+
+    const playCaptureSound = () => {
+        console.log("Playing capture sound...");
+        const audio = new Audio('/sounds/capture.mp3');
+        audio.play().catch(error => {
+            console.error("Error playing capture sound:", error);
+        });
+    };
+
     const handleDrop = (e, i, j) => {
         e.preventDefault();
         if (!draggedPiece || !dragSource || gameOver || promotionInfo || isReviewing) return;
@@ -670,6 +729,7 @@ const ChessBoard = () => {
                 }));
                 playCaptureSound();
             } else {
+                console.log("Regular move - should play move sound");
                 playMoveSound();
             }
             
@@ -682,6 +742,7 @@ const ChessBoard = () => {
                 // Move the rook
                 newBoard[i][newRookCol] = newBoard[i][rookCol];
                 newBoard[i][rookCol] = null;
+                console.log("Castling move - should play move sound");
                 playMoveSound();
             }
             
